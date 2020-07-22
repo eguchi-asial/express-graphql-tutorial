@@ -1,13 +1,17 @@
-* node単体
+* ホストからnode単体
 
 ```
 $npm install
 $npm run start:dev
 ```
 
-* docker単体(srcをコピーしてしまうので、nodemonは有効にならない)
+http://localhost:8080/
+
+* docker単体
 
 ```
 $docker build -t graphql-tutorial-api-server .
 $docker run  -e API_ENV=dev -p 3000:8080 -d graphql-tutorial-api-server
 ```
+
+http://localhost:3000/
