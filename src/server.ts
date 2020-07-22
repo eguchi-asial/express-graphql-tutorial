@@ -1,6 +1,8 @@
 'use strict';
 
 import express from 'express';
+const { graphqlHTTP } = require('express-graphql');
+import { buildSchema } from 'graphql';
 
 const app: express.Express = express();
 
@@ -15,20 +17,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// GetとPostのルーティング
-const router: express.Router = express.Router();
-
-router.get('/', (req:express.Request, res:express.Response) => {
-  res.send({
-    message: 'this is GET'
-  });
-});
-
-router.post('/', (req: express.Request, res: express.Response) => {
-  res.send({
-    result: 'this is POST'
-  });
-})
-
-app.use(router);
+/* スキーマ */
+const schema = buildSchema(`
+  type Query {
+    hello: String
+  }
+`);
+const root = {
+  hello: () => {
+    return 'Hello world!';
+  },
+};
+app.use('/', graphqlHTTP({
+  schema: schema,
+  rootValue: root,
+  graphiql: true,
+}));
 app.listen(8080,()=>{ console.log('Example app listening on port 8080!') });
