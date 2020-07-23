@@ -20,17 +20,23 @@ app.use((req, res, next) => {
 /* スキーマ */
 const schema = buildSchema(`
   type Query {
-    hello: String
+    rollDice(numDice: Int!, numSides: Int): [Int]
   }
 `);
-const root = {
-  hello: () => {
-    return 'Hello world!';
-  },
+/* リゾルバ */
+const rootResolver = {
+  rollDice: ({ numDice, numSides }: { numDice: number, numSides: number }) => {
+    var output = [];
+    for (var i = 0; i < numDice; i++) {
+      output.push(1 + Math.floor(Math.random() * (numSides || 6)));
+    }
+    return output;
+  }
 };
+
 app.use('/', graphqlHTTP({
   schema: schema,
-  rootValue: root,
+  rootValue: rootResolver,
   graphiql: true,
 }));
-app.listen(8080,()=>{ console.log('Example app listening on port 8080!') });
+app.listen(8080, ()=>{ console.log('Example app listening on port 8080!') });
