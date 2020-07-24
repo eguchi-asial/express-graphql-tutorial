@@ -3,6 +3,7 @@
 import express from 'express';
 const { graphqlHTTP } = require('express-graphql');
 import { buildSchema } from 'graphql';
+import { info } from 'console';
 
 const app: express.Express = express();
 
@@ -19,40 +20,73 @@ app.use((req, res, next) => {
 
 /* スキーマ */
 const schema = buildSchema(`
-  type RandomDie {
-    numSides: Int!
-    rollOnce: Int!
-    roll(numRolls: Int!): [Int]
+  input MessageInput {
+    content: String
+  }
+
+  type Message {
+    id: ID!
+    content: String
   }
 
   type Query {
-    getDie(numSides: Int): RandomDie
+    getMessage(id: ID!): Message
+    getAllMessages: [Message]
+  }
+
+  type Mutation {
+    createMessage(input: MessageInput): Message
+    updateMessage(id: ID!, input: MessageInput): Message
   }
 `);
 
-class RandomDie {
-  numSides: number;
+class Message {
+  id: string;
+  content: string;
 
-  constructor(numSides: number) {
-    this.numSides = numSides;
-  }
-
-  rollOnce() {
-    return 1 + Math.floor(Math.random() * this.numSides);
-  }
-
-  roll({ numRolls }: { numRolls: number }) {
-    const output = [];
-    for (let i = 0; i < numRolls; i++) {
-      output.push(this.rollOnce());
-    }
-    return output;
+  constructor(id: string, { content }: {content: string}) {
+    this.id = id;
+    this.content = content;
   }
 }
 
+// Maps username to content
+let fakeDatabase: fakeDatabaseKeys = {};
+interface fakeDatabaseKeys {
+  [id: string]: any
+}
+
+/**
+ * 引数は基本的に暗黙的argsの分割代入
+ */
 const rootResolver = {
-  getDie: ({ numSides }: { numSides: number }) => {
-    return new RandomDie(numSides || 6);
+  getMessage: ({id}: {id: string}) => {
+    if (!fakeDatabase[id]) {
+      throw new Error('no message exists with id ' + id);
+    }
+    return new Message(id, fakeDatabase[id]);
+  },
+  getAllMessages: () => {
+    const messages: Message[] = []
+    Object.keys(fakeDatabase).map(key => {
+      messages.push(new Message(key, fakeDatabase[key]))
+    })
+    return messages
+  },
+  createMessage: ({ input }: { input: string }) => {
+    // Create a random id for our "database".
+    const id = require('crypto').randomBytes(10).toString('hex');
+
+    fakeDatabase[id] = input;
+    return new Message(id, { content: input });
+  },
+  updateMessage: ({ id, input }: { id: string, input: string }) => {
+    if (!fakeDatabase[id]) {
+      throw new Error('no message exists with id ' + id);
+    }
+    // This replaces all old data, but some apps might want partial update.
+    fakeDatabase[id] = input;
+    return new Message(id, { content: input });
   }
 }
 
