@@ -44,7 +44,7 @@ class Message {
   id: string;
   content: string;
 
-  constructor(id: string, { content }: {content: string}) {
+  constructor(id: string, { content }: { content: string }) {
     this.id = id;
     this.content = content;
   }
@@ -60,10 +60,8 @@ interface fakeDatabaseKeys {
  * 引数は基本的に暗黙的argsの分割代入
  */
 const rootResolver = {
-  getMessage: ({id}: {id: string}) => {
-    if (!fakeDatabase[id]) {
-      throw new Error('no message exists with id ' + id);
-    }
+  getMessage: ({ id }: { id: string }) => {
+    if (!fakeDatabase[id]) throw new Error('no message exists with id ' + id);
     return new Message(id, fakeDatabase[id]);
   },
   getAllMessages: () => {
@@ -73,20 +71,21 @@ const rootResolver = {
     })
     return messages
   },
-  createMessage: ({ input }: { input: string }) => {
+  createMessage: ({ input }: { input: {content: string} }) => {
+    if (!input || !input.content) throw new Error('input: { content: string } is required');
     // Create a random id for our "database".
     const id = require('crypto').randomBytes(10).toString('hex');
 
     fakeDatabase[id] = input;
-    return new Message(id, { content: input });
+    return new Message(id, input);
   },
-  updateMessage: ({ id, input }: { id: string, input: string }) => {
+  updateMessage: ({ id, input }: { id: string, input: { content: string } }) => {
+    if (!input || !input.content) throw new Error('input: { content: string } is required');
     if (!fakeDatabase[id]) {
       throw new Error('no message exists with id ' + id);
     }
-    // This replaces all old data, but some apps might want partial update.
     fakeDatabase[id] = input;
-    return new Message(id, { content: input });
+    return new Message(id, input);
   }
 }
 
