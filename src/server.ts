@@ -50,10 +50,11 @@ class Message {
   }
 }
 
-// Maps username to content
+// fake DB
 let fakeDatabase: fakeDatabaseKeys = {};
+// fakeDatabaseのObject Key-Value型定義
 interface fakeDatabaseKeys {
-  [id: string]: any
+  [id: string]: { content: string }
 }
 
 /**
