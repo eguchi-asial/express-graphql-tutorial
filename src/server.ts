@@ -2,7 +2,7 @@
 
 import express, { NextFunction, Request, Response } from 'express';
 import { graphqlHTTP } from 'express-graphql';
-import { buildSchema, GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLList } from 'graphql';
+import { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLList } from 'graphql';
 const app: express.Express = express();
 
 // fake DB
@@ -35,6 +35,7 @@ const userType = new GraphQLObjectType({
   }
 });
 /* schema and resolver */
+// query
 const queryType = new GraphQLObjectType({
   name: 'Query',
   fields: {
@@ -58,7 +59,7 @@ const queryType = new GraphQLObjectType({
     }
   }
 })
-
+// mutation
 const mutationType = new GraphQLObjectType({
   name: 'Mutation',
   fields: {
