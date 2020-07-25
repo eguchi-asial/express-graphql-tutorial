@@ -1,22 +1,9 @@
 'use strict';
 
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 const { graphqlHTTP } = require('express-graphql');
 import { buildSchema } from 'graphql';
-import { info } from 'console';
-
 const app: express.Express = express();
-
-// body-parserに基づいた着信リクエストの解析
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// CORSの許可
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:8080');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  next();
-});
 
 /* スキーマ */
 const schema = buildSchema(`
@@ -30,6 +17,7 @@ const schema = buildSchema(`
   }
 
   type Query {
+    ip: String
     getMessage(id: ID!): Message
     getAllMessages: [Message]
   }
@@ -61,6 +49,9 @@ interface fakeDatabaseKeys {
  * 引数は基本的に暗黙的argsの分割代入
  */
 const rootResolver = {
+  ip: function (args: {}, request: Request) {
+    return request.ip;
+  },
   getMessage: ({ id }: { id: string }) => {
     if (!fakeDatabase[id]) throw new Error('no message exists with id ' + id);
     return new Message(id, fakeDatabase[id]);
@@ -90,6 +81,24 @@ const rootResolver = {
   }
 }
 
+
+// body-parserに基づいた着信リクエストの解析
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// middleware
+// request
+app.use((req: Request, res: Response, next: NextFunction) => {
+  console.log('ip:', req.ip);
+  next();
+})
+// response
+// CORSの許可
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:8080');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
 app.use('/', graphqlHTTP({
   schema: schema,
   rootValue: rootResolver,
