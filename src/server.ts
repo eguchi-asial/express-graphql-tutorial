@@ -1,86 +1,84 @@
 'use strict';
 
 import express, { NextFunction, Request, Response } from 'express';
-const { graphqlHTTP } = require('express-graphql');
-import { buildSchema } from 'graphql';
+import { graphqlHTTP } from 'express-graphql';
+import { buildSchema, GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLList } from 'graphql';
 const app: express.Express = express();
-
-/* スキーマ */
-const schema = buildSchema(`
-  input MessageInput {
-    content: String
-  }
-
-  type Message {
-    id: ID!
-    content: String
-  }
-
-  type Query {
-    ip: String
-    getMessage(id: ID!): Message
-    getAllMessages: [Message]
-  }
-
-  type Mutation {
-    createMessage(input: MessageInput): Message
-    updateMessage(id: ID!, input: MessageInput): Message
-  }
-`);
-
-class Message {
-  id: string;
-  content: string;
-
-  constructor(id: string, { content }: { content: string }) {
-    this.id = id;
-    this.content = content;
-  }
-}
 
 // fake DB
 let fakeDatabase: fakeDatabaseKeys = {};
 // fakeDatabaseのObject Key-Value型定義
 interface fakeDatabaseKeys {
-  [id: string]: { content: string }
-}
-
-/**
- * 引数は基本的に暗黙的argsの分割代入
- */
-const rootResolver = {
-  ip: function (args: {}, request: Request) {
-    return request.ip;
-  },
-  getMessage: ({ id }: { id: string }) => {
-    if (!fakeDatabase[id]) throw new Error('no message exists with id ' + id);
-    return new Message(id, fakeDatabase[id]);
-  },
-  getAllMessages: () => {
-    const messages: Message[] = []
-    Object.keys(fakeDatabase).map(key => {
-      messages.push(new Message(key, fakeDatabase[key]))
-    })
-    return messages
-  },
-  createMessage: ({ input }: { input: {content: string} }) => {
-    if (!input || !input.content) throw new Error('input: { content: string } is required');
-    // Create a random id for our "database".
-    const id = require('crypto').randomBytes(10).toString('hex');
-
-    fakeDatabase[id] = input;
-    return new Message(id, input);
-  },
-  updateMessage: ({ id, input }: { id: string, input: { content: string } }) => {
-    if (!input || !input.content) throw new Error('input: { content: string } is required');
-    if (!fakeDatabase[id]) {
-      throw new Error('no message exists with id ' + id);
-    }
-    fakeDatabase[id] = input;
-    return new Message(id, input);
+  [id: string]: {
+    id: string,
+    name: string
   }
 }
 
+fakeDatabase = {
+  'a': {
+    id: 'a',
+    name: 'alice',
+  },
+  'b': {
+    id: 'b',
+    name: 'bob',
+  },
+};
+
+/* スキーマ */
+const userType = new GraphQLObjectType({
+  name: 'user',
+  fields: {
+    id: { type: GraphQLString },
+    name: { type: GraphQLString }
+  }
+});
+/* schema and resolver */
+const queryType = new GraphQLObjectType({
+  name: 'Query',
+  fields: {
+    user: {
+      type: userType,
+      args: {
+        id: { type: GraphQLString }
+      },
+      resolve: (_, { id }) => {
+        return fakeDatabase[id]
+      }
+    },
+    users: {
+      type: new GraphQLList(userType),
+      resolve: _ => {
+        return Object.keys(fakeDatabase).map(id => ({
+          id,
+          name: fakeDatabase[id].name
+        }))
+      }
+    }
+  }
+})
+
+const mutationType = new GraphQLObjectType({
+  name: 'Mutation',
+  fields: {
+    user: {
+      type: userType,
+      args: {
+        name: { type: GraphQLString }
+      },
+      resolve: (_, { name }) => {
+        if (!name) throw new Error('name is required')
+        const id = require('crypto').randomBytes(10).toString('hex');
+        fakeDatabase[id] = {
+          id,
+          name
+        };
+        return fakeDatabase[id]
+      }
+    }
+  }
+})
 
 // body-parserに基づいた着信リクエストの解析
 app.use(express.json());
@@ -100,8 +98,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 app.use('/', graphqlHTTP({
-  schema: schema,
-  rootValue: rootResolver,
-  graphiql: true,
+  schema: new GraphQLSchema({
+    query: queryType,
+    mutation: mutationType
+  }),
+  graphiql: true
 }));
 app.listen(8080, ()=>{ console.log('Example app listening on port 8080!') });
