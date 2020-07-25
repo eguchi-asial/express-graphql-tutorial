@@ -1,6 +1,6 @@
 'use strict';
 
-import express, { NextFunction, Request, Response } from 'express';
+import express, { NextFunction, Request, Response, response } from 'express';
 import { graphqlHTTP } from 'express-graphql';
 import { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLList } from 'graphql';
 const app: express.Express = express();
@@ -63,7 +63,7 @@ const queryType = new GraphQLObjectType({
 const mutationType = new GraphQLObjectType({
   name: 'Mutation',
   fields: {
-    user: {
+    registUser: {
       type: userType,
       args: {
         name: { type: GraphQLString }
@@ -76,6 +76,33 @@ const mutationType = new GraphQLObjectType({
           name
         };
         return fakeDatabase[id]
+      }
+    },
+    updateUser: {
+      type: userType,
+      args: {
+        id: { type: GraphQLString },
+        name: { type: GraphQLString }
+      },
+      resolve: (_, { id, name }) => {
+        if (!fakeDatabase[id]) throw new Error(`${id} does not exist`)
+        if (!name) throw new Error('name is required')
+        fakeDatabase[id] = {
+          id,
+          name: name
+        }
+        return fakeDatabase[id]
+      }
+    },
+    deleteUser: {
+      type: userType,
+      args: {
+        id: { type: GraphQLString }
+      },
+      resolve: (_, { id }) => {
+        if (!fakeDatabase[id]) throw new Error(`${id} does not exist`)
+        delete fakeDatabase[id]
+        return response.status(204)
       }
     }
   }
