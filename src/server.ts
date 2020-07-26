@@ -2,38 +2,83 @@
 
 import express, { NextFunction, Request, Response, response } from 'express';
 import { graphqlHTTP } from 'express-graphql';
-import { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLList } from 'graphql';
+import { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLList, GraphQLInt, GraphQLInputObjectType, GraphQLUnionType } from 'graphql';
 const app: express.Express = express();
 
 // fake DB
-let fakeDatabase: fakeDatabaseKeys = {};
+let fakeDatabase: FakeDatabaseKeyType = {};
 // fakeDatabaseのObject Key-Value型定義
-interface fakeDatabaseKeys {
+interface PictureType {
+  id: number,
+  title: string,
+  url: string,
+  comment: string,
+  createdAt: string,
+  updatedAt: string,
+  deletedAt?: string
+}
+interface FakeDatabaseKeyType {
   [id: string]: {
     id: string,
-    name: string
+    name: string,
+    pictures: Array<PictureType>
   }
 }
-
 fakeDatabase = {
   'a': {
     id: 'a',
     name: 'alice',
+    pictures: [
+      {
+        id: 1,
+        title: 'title1',
+        url: 'url1',
+        comment: 'comment1',
+        createdAt: '2020-01-01 12:00:00',
+        updatedAt: '2020-01-01 12:00:00'
+      },
+      {
+        id: 2,
+        title: 'title2',
+        url: 'url2',
+        comment: 'comment2',
+        createdAt: '2020-01-01 12:00:00',
+        updatedAt: '2020-01-01 12:00:00',
+        deletedAt: '2020-01-01 12:00:00'
+      },
+    ]
   },
   'b': {
     id: 'b',
     name: 'bob',
+    pictures: []
   },
 };
 
 /* スキーマ */
+const pictureType = new GraphQLObjectType({
+  name: 'picture',
+  description: '写真スキーマ',
+  fields: {
+    id: { type: GraphQLInt },
+    title: { type: GraphQLString },
+    url: { type: GraphQLString },
+    comment: { type: GraphQLString },
+    createdAt: { type: GraphQLString },
+    updatedAt: { type: GraphQLString },
+    deletedAt: { type: GraphQLString }
+  }
+})
 const userType = new GraphQLObjectType({
   name: 'user',
+  description: 'ユーザースキーマ 写真スキーマと1:多の関係',
   fields: {
     id: { type: GraphQLString },
-    name: { type: GraphQLString }
+    name: { type: GraphQLString },
+    pictures: { type: GraphQLList(pictureType) }
   }
 });
+
 /* schema and resolver */
 // query
 const queryType = new GraphQLObjectType({
@@ -44,16 +89,15 @@ const queryType = new GraphQLObjectType({
       args: {
         id: { type: GraphQLString }
       },
-      resolve: (_, { id }) => {
-        return fakeDatabase[id]
-      }
+      resolve: (_, { id }) => fakeDatabase[id]
     },
     users: {
       type: new GraphQLList(userType),
       resolve: _ => {
         return Object.keys(fakeDatabase).map(id => ({
           id,
-          name: fakeDatabase[id].name
+          name: fakeDatabase[id].name,
+          pictures: fakeDatabase[id].pictures
         }))
       }
     }
@@ -73,7 +117,8 @@ const mutationType = new GraphQLObjectType({
         const id = require('crypto').randomBytes(10).toString('hex');
         fakeDatabase[id] = {
           id,
-          name
+          name,
+          pictures: []
         };
         return fakeDatabase[id]
       }
@@ -89,7 +134,8 @@ const mutationType = new GraphQLObjectType({
         if (!name) throw new Error('name is required')
         fakeDatabase[id] = {
           id,
-          name: name
+          name: name,
+          pictures: fakeDatabase[id].pictures
         }
         return fakeDatabase[id]
       }
