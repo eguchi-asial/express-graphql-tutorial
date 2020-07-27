@@ -5,6 +5,7 @@ import {
 
 import { UserQuery, UsersQuery } from './queries'
 import { RegistUserMutation } from './mutations';
+import { DeleteUserMutation } from './mutations/user.delete.mutation';
 
 const fakeDatabase = {
   'a': {
@@ -51,7 +52,8 @@ class Mutation {
   public name = "Mutation";
   public fields = () => {
     return {
-      registUser: new RegistUserMutation(fakeDatabase)
+      registUser: new RegistUserMutation(fakeDatabase),
+      deleteUser: new DeleteUserMutation(fakeDatabase)
     }
   }
 }
