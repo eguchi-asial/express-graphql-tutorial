@@ -1,13 +1,10 @@
 import {
   GraphQLType,
-  GraphQLNonNull,
   GraphQLString,
   GraphQLInt
 } from 'graphql';
 
-import { UserType } from '../types'
 import { FakeDatabaseKeyType } from "../types/fakeDatabase.type";
-import { response } from 'express';
 
 export interface GraphQLMutation {
   type: GraphQLType;
