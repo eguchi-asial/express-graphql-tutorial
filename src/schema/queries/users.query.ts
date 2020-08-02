@@ -10,7 +10,9 @@ export class UsersQuery implements GraphQLQuery {
   }
   public type = new GraphQLList(UserType);
   public description: string = "List of all Users";
-  public resolve = async (args: any) => {
+  public resolve = () => {
+    // TODO userスキーマのpictureに指定したargs(firstとか)どうやって取得すんの？
+    // 上記が解決したら、cursor、edge、nodeの実装に移る
     return Object.keys(this.fakeDatabase).map(id => {
       const fakeDatabase = this.fakeDatabase
       return {
