@@ -5,12 +5,7 @@ import {
 
 import { UserType } from '../types'
 import { FakeDatabaseKeyType } from "../types/fakeDatabase.type";
-
-export interface GraphQLMutation {
-  type: GraphQLType;
-  description: string;
-  resolve: Function;
-}
+import { GraphQLMutation } from './mutation.interface';
 
 export class RegistUserMutation implements GraphQLMutation {
   protected fakeDatabase: FakeDatabaseKeyType = {}

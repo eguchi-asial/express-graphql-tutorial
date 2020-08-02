@@ -1,4 +1,4 @@
-import { GraphQLObjectType, GraphQLString, GraphQLList } from "graphql";
+import { GraphQLObjectType, GraphQLString, GraphQLList, GraphQLInt } from "graphql";
 import { PictureType } from "./picture.type";
 
 class User {
@@ -7,7 +7,13 @@ class User {
     return {
       id: { type: GraphQLString },
       name: { type: GraphQLString },
-      pictures: { type: GraphQLList(PictureType) }
+      pictures: {
+        type: GraphQLList(PictureType),
+        args: {
+          first!: { type: GraphQLInt },
+          last!: { type: GraphQLInt }
+        }
+      }
     }
   }
 }

@@ -5,12 +5,7 @@ import {
 } from 'graphql';
 
 import { FakeDatabaseKeyType } from "../types/fakeDatabase.type";
-
-export interface GraphQLMutation {
-  type: GraphQLType;
-  description: string;
-  resolve: Function;
-}
+import { GraphQLMutation } from './mutation.interface';
 
 export class DeleteUserMutation implements GraphQLMutation {
   protected fakeDatabase: FakeDatabaseKeyType = {}
@@ -26,7 +21,6 @@ export class DeleteUserMutation implements GraphQLMutation {
   public resolve = (root: any, { id }: { [id: string]: string }) => {
     if (!id || !this.fakeDatabase[id]) throw new Error(`${id} does not exist`)
     delete this.fakeDatabase[id]
-    console.log(this.fakeDatabase)
     // TODO deleteはGraphQLでは何返すべき？
     return 204
   }
