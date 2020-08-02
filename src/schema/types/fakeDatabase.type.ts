@@ -1,4 +1,4 @@
-interface PictureType {
+export interface PictureType {
   id: number,
   title: string,
   url: string,

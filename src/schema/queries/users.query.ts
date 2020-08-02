@@ -1,4 +1,4 @@
-import { GraphQLList } from "graphql";
+import { GraphQLList, GraphQLInt } from "graphql";
 import { UserType } from "../types";
 import { FakeDatabaseKeyType } from "../types/fakeDatabase.type";
 
