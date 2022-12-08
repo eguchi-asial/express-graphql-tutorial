@@ -8,7 +8,7 @@
     "start:dev": "nodemon"
   },
   "dependencies": {
-    "express": "^4.16.1",
+    "express": "^4.18.2",
     "express-graphql": "^0.11.0",
     "graphql": "^15.3.0"
   },
